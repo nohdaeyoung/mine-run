@@ -6,9 +6,10 @@ interface CellProps {
   cell: CellType;
   row: number;
   col: number;
-  onReveal: (row: number, col: number) => void;
-  onFlag: (row: number, col: number) => void;
-  onChord: (row: number, col: number) => void;
+  size: number;
+  onReveal: () => void;
+  onFlag: () => void;
+  onChord: () => void;
 }
 
 const NUMBER_COLORS: Record<number, string> = {
@@ -22,22 +23,17 @@ const NUMBER_COLORS: Record<number, string> = {
   8: 'text-gray-500',
 };
 
-export default function Cell({ cell, row, col, onReveal, onFlag, onChord }: CellProps) {
+export default function Cell({ cell, size, onReveal, onFlag, onChord }: CellProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (cell.visibility === 'revealed') {
-      onChord(row, col);
-    } else {
-      onReveal(row, col);
-    }
+    onReveal();
   };
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault();
-    onFlag(row, col);
+    onFlag();
   };
 
-  // Determine cell appearance
   let content = '';
   let bgClass = 'bg-slate-300 hover:bg-slate-200 cursor-pointer';
   let textClass = '';
@@ -60,16 +56,18 @@ export default function Cell({ cell, row, col, onReveal, onFlag, onChord }: Cell
     bgClass = 'bg-red-200 hover:bg-red-100 cursor-pointer';
   }
 
+  const fontSize = size >= 40 ? 'text-base' : size >= 32 ? 'text-sm' : 'text-xs';
+
   return (
     <button
       className={`
-        w-8 h-8 border border-slate-400/50 flex items-center justify-center
-        text-sm font-bold select-none transition-all duration-75
-        ${bgClass} ${textClass}
+        border border-slate-400/50 flex items-center justify-center
+        font-bold select-none transition-all duration-75
+        ${bgClass} ${textClass} ${fontSize}
       `}
+      style={{ width: size, height: size }}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
-      aria-label={`Cell ${row},${col}`}
     >
       {content}
     </button>

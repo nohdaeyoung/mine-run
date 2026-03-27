@@ -4,7 +4,6 @@ import { useGameStore } from '@/lib/store';
 
 export default function HUD() {
   const score = useGameStore((s) => s.run.score);
-  const combo = useGameStore((s) => s.run.combo);
   const health = useGameStore((s) => s.run.health);
   const items = useGameStore((s) => s.run.items);
   const roomIndex = useGameStore((s) => s.run.roomIndex);
@@ -18,13 +17,13 @@ export default function HUD() {
   const minesRemaining = field.mines - flagCount;
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-lg mx-auto px-2">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-800 text-white rounded-t-lg text-sm">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-800 text-white rounded-t-lg text-xs sm:text-sm">
         <span className="font-mono">
           Room {roomIndex + 1}/{totalRooms}
         </span>
-        <span className="font-bold text-lg tabular-nums">
+        <span className="font-bold text-base sm:text-lg tabular-nums">
           {score.toLocaleString()}
         </span>
         <span className="font-mono">
@@ -33,33 +32,28 @@ export default function HUD() {
       </div>
 
       {/* Bottom bar */}
-      <div className="flex items-center justify-between px-3 py-2 bg-slate-700 text-white rounded-b-lg text-sm mt-0">
+      <div className="flex items-center justify-between px-3 py-2 bg-slate-700 text-white rounded-b-lg text-xs sm:text-sm gap-2">
         {/* Health */}
-        <div className="flex gap-0.5">
+        <div className="flex gap-0.5 shrink-0">
           {Array.from({ length: health.max }, (_, i) => (
-            <span key={i} className={`text-lg ${i < health.current ? '' : 'opacity-30'}`}>
+            <span key={i} className={`text-sm sm:text-lg ${i < health.current ? '' : 'opacity-30'}`}>
               {i < health.current ? '❤️' : '🖤'}
             </span>
           ))}
         </div>
 
         {/* Items */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 overflow-x-auto">
           {items.map((item, i) => (
             <div
               key={i}
               className={`
-                px-2 py-0.5 rounded text-xs font-medium
+                px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap
                 ${item.rarity === 'legendary' ? 'bg-amber-500' : item.rarity === 'rare' ? 'bg-blue-500' : 'bg-slate-500'}
               `}
               title={item.description}
             >
               {item.name} {item.type === 'active' ? `×${item.charges}` : ''}
-            </div>
-          ))}
-          {Array.from({ length: Math.max(0, 3 - items.length) }, (_, i) => (
-            <div key={`empty-${i}`} className="px-2 py-0.5 rounded text-xs bg-slate-600 opacity-30">
-              empty
             </div>
           ))}
         </div>

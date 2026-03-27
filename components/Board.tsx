@@ -1,19 +1,43 @@
 'use client';
 
+import { useState, useMemo } from 'react';
 import { useGameStore } from '@/lib/store';
 import { handleReveal, handleFlag, handleChord } from '@/lib/tile-interaction';
 import { generateFieldOnFirstClick } from '@/lib/run';
 import Cell from './Cell';
 
+function useWindowWidth() {
+  const [width, setWidth] = useState(
+    typeof window !== 'undefined' ? window.innerWidth : 800
+  );
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('resize', () => setWidth(window.innerWidth), { once: false });
+  }
+
+  return width;
+}
+
 export default function Board() {
   const field = useGameStore((s) => s.run.field);
   const phase = useGameStore((s) => s.run.phase);
+  const [flagMode, setFlagMode] = useState(false);
+
+  const windowWidth = useWindowWidth();
+
+  // Calculate cell size based on screen width
+  const cellSize = useMemo(() => {
+    if (field.width === 0) return 40;
+    const padding = 32; // 16px each side
+    const borderSpace = 4;
+    const available = windowWidth - padding - borderSpace;
+    const size = Math.floor(available / field.width);
+    return Math.max(28, Math.min(48, size)); // min 28px, max 48px
+  }, [windowWidth, field.width]);
 
   const onReveal = (row: number, col: number) => {
-    // Generate field on first click
     if (field.cells.length === 0) {
       generateFieldOnFirstClick(row, col);
-      // After generation, re-read state and reveal
       const newField = useGameStore.getState().run.field;
       if (newField.cells.length > 0) {
         handleReveal(row, col);
@@ -33,17 +57,41 @@ export default function Board() {
     handleChord(row, col);
   };
 
+  const handleCellClick = (row: number, col: number) => {
+    const cell = field.cells[row]?.[col];
+    if (cell?.visibility === 'revealed') {
+      onChord(row, col);
+    } else if (flagMode) {
+      onFlag(row, col);
+    } else {
+      onReveal(row, col);
+    }
+  };
+
   if (phase === 'not_started') return null;
 
-  // Before first click: show empty grid
   const showEmpty = field.cells.length === 0;
 
   return (
-    <div className="flex flex-col items-center gap-1" onContextMenu={(e) => e.preventDefault()}>
+    <div className="flex flex-col items-center gap-2 w-full px-2" onContextMenu={(e) => e.preventDefault()}>
+      {/* Flag mode toggle */}
+      <button
+        onClick={() => setFlagMode(!flagMode)}
+        className={`
+          px-4 py-2 rounded-lg font-bold text-sm transition-all cursor-pointer
+          ${flagMode
+            ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+          }
+        `}
+      >
+        {flagMode ? '🚩 Flag Mode ON' : '👆 Tap to Reveal'}
+      </button>
+
       <div
         className="inline-grid gap-0 border-2 border-slate-500 rounded"
         style={{
-          gridTemplateColumns: `repeat(${field.width}, 2rem)`,
+          gridTemplateColumns: `repeat(${field.width}, ${cellSize}px)`,
         }}
       >
         {showEmpty
@@ -53,9 +101,9 @@ export default function Board() {
               return (
                 <button
                   key={`${row}-${col}`}
-                  className="w-8 h-8 border border-slate-400/50 bg-slate-300 hover:bg-slate-200 cursor-pointer select-none transition-all duration-75"
+                  className="border border-slate-400/50 bg-slate-300 hover:bg-slate-200 cursor-pointer select-none transition-all duration-75"
+                  style={{ width: cellSize, height: cellSize }}
                   onClick={() => onReveal(row, col)}
-                  onContextMenu={(e) => e.preventDefault()}
                   aria-label={`Cell ${row},${col}`}
                 />
               );
@@ -67,9 +115,10 @@ export default function Board() {
                   cell={cell}
                   row={row}
                   col={col}
-                  onReveal={onReveal}
-                  onFlag={onFlag}
-                  onChord={onChord}
+                  size={cellSize}
+                  onReveal={() => handleCellClick(row, col)}
+                  onFlag={() => onFlag(row, col)}
+                  onChord={() => onChord(row, col)}
                 />
               ))
             )}
