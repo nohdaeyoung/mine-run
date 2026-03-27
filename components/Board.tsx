@@ -87,6 +87,25 @@ export default function Board() {
 
   return (
     <div className="flex flex-col items-center gap-2 w-full px-2" onContextMenu={(e) => e.preventDefault()}>
+      {/* Desktop toggle button above board */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggleFlagMode}
+          className={`
+            px-4 py-2 rounded-lg font-bold text-sm transition-all cursor-pointer
+            ${flagMode
+              ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
+              : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+            }
+          `}
+        >
+          {flagMode ? '🚩 Flag Mode ON' : '👆 Reveal Mode'}
+        </button>
+        <span className="text-xs text-slate-500 hidden sm:inline">
+          Right-click or press <kbd className="px-1.5 py-0.5 bg-slate-700 rounded text-slate-300 font-mono">F</kbd> to toggle
+        </span>
+      </div>
+
       <div
         className="inline-grid gap-0 border-2 border-slate-500 rounded"
         style={{
@@ -123,11 +142,11 @@ export default function Board() {
             )}
       </div>
 
-      {/* Floating flag toggle — bottom right */}
+      {/* Floating flag toggle — bottom right (mobile only) */}
       <button
         onClick={toggleFlagMode}
         className={`
-          fixed bottom-6 right-6 z-30
+          fixed bottom-6 right-6 z-30 sm:hidden
           w-14 h-14 rounded-full flex items-center justify-center
           text-2xl shadow-lg transition-all active:scale-95 cursor-pointer
           ${flagMode
