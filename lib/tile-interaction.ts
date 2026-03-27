@@ -148,19 +148,62 @@ export function handleReveal(row: number, col: number): void {
 }
 
 // === Auto-clear check ===
-// When all safe cells are revealed, clear the field (even without explicit click)
+// Two conditions trigger auto-clear:
+// 1. All safe cells are already revealed (revealedCount >= totalSafeCells)
+// 2. All mines are accounted for (flagged + exploded = total mines) → auto-reveal remaining hidden safe cells
 function checkAutoFieldClear(): void {
   const store = useGameStore.getState();
   const { field, phase } = store.run;
+  const { actions } = store;
 
   if (phase !== 'in_progress') return;
   if (field.cells.length === 0) return;
 
+  // Condition 1: all safe cells revealed
   if (field.revealedCount >= field.totalSafeCells) {
     const clearBonus = calculateClearBonus(field.totalSafeCells);
-    store.actions.addScore(clearBonus);
-    store.actions.setPhase('reward_selection');
-    store.actions.setScreen('reward');
+    actions.addScore(clearBonus);
+    actions.setPhase('reward_selection');
+    actions.setScreen('reward');
+    eventCallbacks.onFieldCleared?.();
+    return;
+  }
+
+  // Condition 2: all mines flagged/exploded → auto-reveal remaining hidden safe cells
+  let flaggedMines = 0;
+  let explodedMines = 0;
+  const hiddenSafeCells: { row: number; col: number }[] = [];
+
+  for (let r = 0; r < field.height; r++) {
+    for (let c = 0; c < field.width; c++) {
+      const cell = field.cells[r][c];
+      if (cell.value === 'mine') {
+        if (cell.visibility === 'flagged') flaggedMines++;
+        if (cell.visibility === 'exploded') explodedMines++;
+      } else if (cell.visibility === 'hidden') {
+        hiddenSafeCells.push({ row: r, col: c });
+      }
+    }
+  }
+
+  if (flaggedMines + explodedMines >= field.mines && hiddenSafeCells.length > 0) {
+    // All mines accounted for — auto-reveal remaining safe cells
+    const newCells = field.cells.map((r) => r.map((c) => ({ ...c })));
+    for (const { row, col } of hiddenSafeCells) {
+      newCells[row][col] = { ...newCells[row][col], visibility: 'revealed' };
+    }
+    actions.updateCells(newCells);
+    actions.incrementRevealed(hiddenSafeCells.length);
+
+    const { grade, multiplier, points } = calculateScore(hiddenSafeCells.length);
+    actions.addScore(points);
+    actions.setCombo(hiddenSafeCells.length, multiplier);
+    eventCallbacks.onCellsRevealed?.(hiddenSafeCells, grade, points, multiplier);
+
+    const clearBonus = calculateClearBonus(field.totalSafeCells);
+    actions.addScore(clearBonus);
+    actions.setPhase('reward_selection');
+    actions.setScreen('reward');
     eventCallbacks.onFieldCleared?.();
   }
 }
