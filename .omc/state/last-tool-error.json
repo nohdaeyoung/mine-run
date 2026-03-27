@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"echo \\\"https://lasting-python-79241.upstash.io\\\" | npx vercel env add UPSTASH_REDIS_REST_URL production preview development --force 2>&1\",\"timeout\":15000,\"description\":\"Set Redis URL env v...",
+  "error": "Exit code 1\nVercel CLI 50.23.1\nError: Invalid number of arguments. Usage: `vercel env add <name> <production | preview | development> <gitbranch>`",
+  "timestamp": "2026-03-27T10:53:39.198Z",
+  "retry_count": 1
+}

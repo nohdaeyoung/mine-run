@@ -1,6 +1,3 @@
-const STORAGE_KEY = 'mine-run-leaderboard';
-const MAX_ENTRIES = 10;
-
 export interface LeaderboardEntry {
   nickname: string;
   score: number;
@@ -9,37 +6,27 @@ export interface LeaderboardEntry {
   date: string;
 }
 
-export function getLeaderboard(): LeaderboardEntry[] {
-  if (typeof window === 'undefined') return [];
+export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
-    return data ? JSON.parse(data) : [];
+    const res = await fetch('/api/leaderboard');
+    if (!res.ok) return [];
+    return await res.json();
   } catch {
     return [];
   }
 }
 
-export function addToLeaderboard(entry: LeaderboardEntry): number {
-  const board = getLeaderboard();
-  board.push(entry);
-  board.sort((a, b) => b.score - a.score);
-  const trimmed = board.slice(0, MAX_ENTRIES);
-
+export async function addToLeaderboard(entry: Omit<LeaderboardEntry, 'date'>): Promise<number> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    const res = await fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    });
+    if (!res.ok) return -1;
+    const data = await res.json();
+    return data.rank ?? -1;
   } catch {
-    // localStorage full or unavailable
+    return -1;
   }
-
-  // Return rank (1-based), or -1 if not in top 10
-  const rank = trimmed.findIndex(
-    (e) => e.score === entry.score && e.nickname === entry.nickname && e.date === entry.date
-  );
-  return rank === -1 ? -1 : rank + 1;
-}
-
-export function isTopScore(score: number): boolean {
-  const board = getLeaderboard();
-  if (board.length < MAX_ENTRIES) return true;
-  return score > board[board.length - 1].score;
 }

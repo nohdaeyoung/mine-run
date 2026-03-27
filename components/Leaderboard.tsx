@@ -10,10 +10,15 @@ export default function Leaderboard() {
   const screen = useGameStore((s) => s.flow.screen);
   const setScreen = useGameStore((s) => s.actions.setScreen);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (screen === 'meta_shop') {
-      setEntries(getLeaderboard());
+      setLoading(true);
+      getLeaderboard().then((data) => {
+        setEntries(data);
+        setLoading(false);
+      });
     }
   }, [screen]);
 
@@ -25,7 +30,9 @@ export default function Leaderboard() {
       <div className="max-w-md w-full">
         <h1 className="text-3xl font-black text-center mb-6">Leaderboard</h1>
 
-        {entries.length === 0 ? (
+        {loading ? (
+          <div className="text-center text-slate-500 py-12">Loading...</div>
+        ) : entries.length === 0 ? (
           <div className="text-center text-slate-500 py-12">
             No records yet. Play a game!
           </div>

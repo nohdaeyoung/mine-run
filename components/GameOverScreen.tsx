@@ -15,6 +15,7 @@ export default function GameOverScreen() {
 
   const [nickname, setNickname] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [rank, setRank] = useState<number | null>(null);
 
   if (screen !== 'game_over' && screen !== 'victory') return null;
@@ -25,18 +26,18 @@ export default function GameOverScreen() {
     Math.floor(score * CONFIG.MINERAL_RATE * (isVictory ? CONFIG.VICTORY_BONUS_MULT : 1))
   );
 
-  const handleSubmitScore = () => {
-    if (!nickname.trim()) return;
-    const entry = {
+  const handleSubmitScore = async () => {
+    if (!nickname.trim() || submitting) return;
+    setSubmitting(true);
+    const newRank = await addToLeaderboard({
       nickname: nickname.trim(),
       score,
       bestCombo,
       roomReached: roomIndex + 1,
-      date: new Date().toISOString(),
-    };
-    const newRank = addToLeaderboard(entry);
+    });
     setRank(newRank);
     setSubmitted(true);
+    setSubmitting(false);
   };
 
   const handlePlayAgain = () => {
@@ -93,10 +94,10 @@ export default function GameOverScreen() {
               />
               <button
                 onClick={handleSubmitScore}
-                disabled={!nickname.trim()}
+                disabled={!nickname.trim() || submitting}
                 className="px-4 py-2 bg-amber-500 text-black font-bold rounded-lg text-sm hover:bg-amber-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
               >
-                Save
+                {submitting ? '...' : 'Save'}
               </button>
             </div>
           </div>
