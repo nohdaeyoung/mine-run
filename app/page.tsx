@@ -8,12 +8,14 @@ import ComboPopup from '@/components/ComboPopup';
 import RewardScreen from '@/components/RewardScreen';
 import GameOverScreen from '@/components/GameOverScreen';
 import Leaderboard from '@/components/Leaderboard';
+import NoContextMenu from '@/components/NoContextMenu';
 
 export default function Home() {
   const screen = useGameStore((s) => s.flow.screen);
 
   return (
     <div className="min-h-screen bg-slate-900">
+      <NoContextMenu />
       <TitleScreen />
 
       {screen === 'run' && (
