@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameStore } from '@/lib/store';
 import { handleReveal, handleFlag, handleChord } from '@/lib/tile-interaction';
 import { generateFieldOnFirstClick } from '@/lib/run';
@@ -22,6 +22,19 @@ export default function Board() {
   const field = useGameStore((s) => s.run.field);
   const phase = useGameStore((s) => s.run.phase);
   const [flagMode, setFlagMode] = useState(false);
+
+  const toggleFlagMode = useCallback(() => setFlagMode((f) => !f), []);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFlagMode();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [toggleFlagMode]);
 
   const windowWidth = useWindowWidth();
 
@@ -85,7 +98,7 @@ export default function Board() {
           }
         `}
       >
-        {flagMode ? '🚩 Flag Mode ON' : '👆 Tap to Reveal'}
+        {flagMode ? '🚩 Flag Mode ON (F)' : '👆 Tap to Reveal (F)'}
       </button>
 
       <div
