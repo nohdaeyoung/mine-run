@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "nickname": "test",
+    "score": 500,
+    "bestCombo": 15,
+    "roomReached": 3,
+    "date": "2026-03-27T11:35:30.462Z"
+  }
+]
