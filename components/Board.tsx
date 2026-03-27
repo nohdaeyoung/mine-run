@@ -87,20 +87,6 @@ export default function Board() {
 
   return (
     <div className="flex flex-col items-center gap-2 w-full px-2" onContextMenu={(e) => e.preventDefault()}>
-      {/* Flag mode toggle */}
-      <button
-        onClick={() => setFlagMode(!flagMode)}
-        className={`
-          px-4 py-2 rounded-lg font-bold text-sm transition-all cursor-pointer
-          ${flagMode
-            ? 'bg-red-500 text-white shadow-lg shadow-red-500/30'
-            : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
-          }
-        `}
-      >
-        {flagMode ? '🚩 Flag Mode ON (F)' : '👆 Tap to Reveal (F)'}
-      </button>
-
       <div
         className="inline-grid gap-0 border-2 border-slate-500 rounded"
         style={{
@@ -136,6 +122,23 @@ export default function Board() {
               ))
             )}
       </div>
+
+      {/* Floating flag toggle — bottom right */}
+      <button
+        onClick={toggleFlagMode}
+        className={`
+          fixed bottom-6 right-6 z-30
+          w-14 h-14 rounded-full flex items-center justify-center
+          text-2xl shadow-lg transition-all active:scale-95 cursor-pointer
+          ${flagMode
+            ? 'bg-red-500 text-white shadow-red-500/40'
+            : 'bg-slate-700 text-slate-300 shadow-slate-900/50'
+          }
+        `}
+        aria-label={flagMode ? 'Flag mode on' : 'Reveal mode'}
+      >
+        {flagMode ? '🚩' : '👆'}
+      </button>
     </div>
   );
 }
