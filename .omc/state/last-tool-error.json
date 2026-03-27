@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git pull --rebase origin main && git push origin main\",\"timeout\":30000,\"description\":\"Pull rebase and push\"}",
-  "error": "Exit code 128\nerror: cannot pull with rebase: You have unstaged changes.\nerror: Please commit or stash them.",
-  "timestamp": "2026-03-27T11:47:51.060Z",
+  "tool_input_preview": "{\"command\":\"npx next build 2>&1 | tail -3 && npx vercel --prod --yes 2>&1 | tail -3 && git add -A && git commit -m \\\"$(cat <<'EOF'\\nfix: field clear now works when safe cells are flagged\\n\\nRoot cause...",
+  "error": "Exit code 1\n○  (Static)   prerendered as static content\nƒ  (Dynamic)  server-rendered on demand\n\nCommon next commands:\n- `vercel inspect app-g7n7s63z5-rohdys-projects.vercel.app --logs`\n- `vercel redeploy app-g7n7s63z5-rohdys-projects.vercel.app`\n[main f4df29f] fix: field clear now works when safe cells are flagged\n 3 files changed, 39 insertions(+), 27 deletions(-)\nTo https://github.com/nohdaeyoung/mine-run.git\n ! [rejected]        main -> main (fetch first)\nerror: failed to push some refs to '...",
+  "timestamp": "2026-03-27T11:57:03.132Z",
   "retry_count": 1
 }
