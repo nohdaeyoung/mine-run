@@ -27,8 +27,11 @@ export async function POST(req: NextRequest) {
       date: new Date().toISOString(),
     };
 
-    const rank = await addToServerLeaderboard(entry);
-    return NextResponse.json({ rank });
+    const result = await addToServerLeaderboard(entry);
+    if (result.error) {
+      return NextResponse.json({ error: result.error, rank: -1 }, { status: 502 });
+    }
+    return NextResponse.json({ rank: result.rank });
   } catch {
     return NextResponse.json({ error: 'Failed to save' }, { status: 500 });
   }

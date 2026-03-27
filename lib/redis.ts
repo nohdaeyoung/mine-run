@@ -34,12 +34,13 @@ async function getFile(): Promise<{ data: LeaderboardEntry[]; sha: string }> {
   }
 
   const file: GitHubFileResponse = await res.json();
-  const decoded = atob(file.content.replace(/\n/g, ''));
+  const decoded = Buffer.from(file.content, 'base64').toString('utf-8');
   return { data: JSON.parse(decoded), sha: file.sha };
 }
 
-async function putFile(data: LeaderboardEntry[], sha: string): Promise<void> {
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+async function putFile(data: LeaderboardEntry[], sha: string): Promise<{ ok: boolean; error?: string }> {
+  const json = JSON.stringify(data, null, 2);
+  const content = Buffer.from(json, 'utf-8').toString('base64');
 
   const body: Record<string, string> = {
     message: `update leaderboard [${new Date().toISOString()}]`,
@@ -48,7 +49,7 @@ async function putFile(data: LeaderboardEntry[], sha: string): Promise<void> {
   };
   if (sha) body.sha = sha;
 
-  await fetch(
+  const res = await fetch(
     `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`,
     {
       method: 'PUT',
@@ -60,6 +61,13 @@ async function putFile(data: LeaderboardEntry[], sha: string): Promise<void> {
       body: JSON.stringify(body),
     }
   );
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.error('GitHub PUT failed:', res.status, text);
+    return { ok: false, error: `${res.status}: ${text}` };
+  }
+  return { ok: true };
 }
 
 const MAX_ENTRIES = 50;
@@ -69,15 +77,19 @@ export async function getServerLeaderboard(): Promise<LeaderboardEntry[]> {
   return data;
 }
 
-export async function addToServerLeaderboard(entry: LeaderboardEntry): Promise<number> {
+export async function addToServerLeaderboard(entry: LeaderboardEntry): Promise<{ rank: number; error?: string }> {
   const { data: board, sha } = await getFile();
   board.push(entry);
   board.sort((a, b) => b.score - a.score);
   const trimmed = board.slice(0, MAX_ENTRIES);
-  await putFile(trimmed, sha);
+  const result = await putFile(trimmed, sha);
+
+  if (!result.ok) {
+    return { rank: -1, error: result.error };
+  }
 
   const rank = trimmed.findIndex(
     (e) => e.score === entry.score && e.nickname === entry.nickname && e.date === entry.date
   );
-  return rank === -1 ? -1 : rank + 1;
+  return { rank: rank === -1 ? -1 : rank + 1 };
 }
