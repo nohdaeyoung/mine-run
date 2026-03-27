@@ -107,7 +107,7 @@ export default function Board() {
       </div>
 
       <div
-        className="inline-grid gap-0 border-2 border-slate-500 rounded"
+        className="inline-grid gap-0 border border-slate-600/50 rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)]"
         style={{
           gridTemplateColumns: `repeat(${field.width}, ${cellSize}px)`,
         }}

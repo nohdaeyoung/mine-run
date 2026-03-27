@@ -111,9 +111,11 @@ export default function GameOverScreen() {
 
         <button
           onClick={handlePlayAgain}
-          className="w-full px-8 py-3 bg-white text-black font-bold rounded-lg text-lg hover:bg-slate-200 transition-all hover:scale-105 cursor-pointer"
+          className="w-full px-8 py-3 bg-red-500 text-white font-black rounded-lg text-lg
+            hover:bg-red-400 transition-all hover:scale-105 active:scale-95 cursor-pointer
+            shadow-[0_0_30px_rgba(239,68,68,0.3)]"
         >
-          Play Again
+          PLAY AGAIN
         </button>
 
         <div className="flex gap-4 justify-center mt-3">
