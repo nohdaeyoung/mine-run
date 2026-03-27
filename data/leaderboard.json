@@ -1,5 +1,12 @@
 [
   {
+    "nickname": "test03",
+    "score": 3338,
+    "bestCombo": 65,
+    "roomReached": 3,
+    "date": "2026-03-27T21:14:04.920Z"
+  },
+  {
     "nickname": "test",
     "score": 2983,
     "bestCombo": 53,
