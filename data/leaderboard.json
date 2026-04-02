@@ -8,6 +8,13 @@
   },
   {
     "nickname": "test",
+    "score": 5797,
+    "bestCombo": 66,
+    "roomReached": 5,
+    "date": "2026-04-02T03:51:55.421Z"
+  },
+  {
+    "nickname": "test",
     "score": 5609,
     "bestCombo": 57,
     "roomReached": 5,
