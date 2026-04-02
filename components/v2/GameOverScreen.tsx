@@ -34,6 +34,7 @@ export default function GameOverScreen() {
       score,
       bestCombo,
       roomReached: roomIndex + 1,
+      version: 'v2',
     });
     setRank(newRank);
     setSubmitted(true);

@@ -7,6 +7,7 @@ export interface LeaderboardEntry {
   bestCombo: number;
   roomReached: number;
   date: string;
+  version?: string;
 }
 
 const LEADERBOARD_REF = 'mine-run/leaderboard';
@@ -30,12 +31,13 @@ export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   }
 }
 
-export async function addToLeaderboard(entry: Omit<LeaderboardEntry, 'date'>): Promise<number> {
+export async function addToLeaderboard(entry: Omit<LeaderboardEntry, 'date'> & { version?: string }): Promise<number> {
   try {
     const newEntry: LeaderboardEntry = {
       ...entry,
       nickname: entry.nickname.slice(0, 12),
       date: new Date().toISOString(),
+      version: entry.version,
     };
 
     await push(ref(getDb(), LEADERBOARD_REF), newEntry);

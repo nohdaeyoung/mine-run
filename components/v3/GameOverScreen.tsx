@@ -31,7 +31,7 @@ export default function GameOverScreen() {
     if (!nickname.trim() || submitting) return;
     setSubmitting(true);
     const newRank = await addToLeaderboard({
-      nickname: nickname.trim(), score, bestCombo, roomReached: roomIndex + 1,
+      nickname: nickname.trim(), score, bestCombo, roomReached: roomIndex + 1, version: 'v3',
     });
     setRank(newRank);
     setSubmitted(true);

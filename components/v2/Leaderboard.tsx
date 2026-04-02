@@ -6,16 +6,26 @@ import { getLeaderboard, type LeaderboardEntry } from '@/lib/leaderboard';
 
 const RANK_ICONS = ['👑', '🥈', '🥉'];
 
+function formatDate(date: string) {
+  const d = new Date(date);
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${mm}.${dd} ${hh}:${min}`;
+}
+
 export default function Leaderboard() {
   const screen = useGameStore((s) => s.flow.screen);
   const setScreen = useGameStore((s) => s.actions.setScreen);
-  const totalRooms = useGameStore((s) => s.run.totalRooms);
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     if (screen === 'meta_shop') {
       setLoading(true);
+      setShowAll(false);
       getLeaderboard().then((data) => {
         setEntries(data);
         setLoading(false);
@@ -24,6 +34,8 @@ export default function Leaderboard() {
   }, [screen]);
 
   if (screen !== 'meta_shop') return null;
+
+  const displayed = showAll ? entries : entries.slice(0, 10);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-pink-100 via-orange-50 to-yellow-50 text-pink-800 px-4">
@@ -42,20 +54,19 @@ export default function Leaderboard() {
           </div>
         ) : (
           <div className="bg-white/80 backdrop-blur-sm rounded-2xl overflow-hidden border-2 border-pink-200/60 shadow-lg shadow-pink-100/50">
-            {/* Header */}
-            <div className="grid grid-cols-[2.5rem_1fr_5rem_4rem] gap-2 px-4 py-2 text-xs text-pink-400 border-b border-pink-100">
+            <div className="grid grid-cols-[2rem_1fr_4.5rem_5rem_2.5rem] gap-1 px-3 py-2 text-[10px] text-pink-400 border-b border-pink-100">
               <div>#</div>
               <div>Name</div>
               <div className="text-right">Score</div>
-              <div className="text-right">Room</div>
+              <div className="text-right">Time</div>
+              <div className="text-right">Ver</div>
             </div>
 
-            {/* Entries */}
-            {entries.map((entry, i) => (
+            {displayed.map((entry, i) => (
               <div
                 key={i}
                 className={`
-                  grid grid-cols-[2.5rem_1fr_5rem_4rem] gap-2 px-4 py-3 text-sm
+                  grid grid-cols-[2rem_1fr_4.5rem_5rem_2.5rem] gap-1 px-3 py-2.5 text-sm
                   ${i % 2 === 0 ? 'bg-pink-50/50' : ''}
                   ${i < 3 ? 'font-bold' : ''}
                 `}
@@ -65,9 +76,19 @@ export default function Leaderboard() {
                 </div>
                 <div className="truncate text-pink-700">{entry.nickname}</div>
                 <div className="text-right tabular-nums text-pink-700">{entry.score.toLocaleString()}</div>
-                <div className="text-right text-pink-400">{entry.roomReached}/{totalRooms || 13}</div>
+                <div className="text-right text-pink-300 text-[10px] tabular-nums">{formatDate(entry.date)}</div>
+                <div className="text-right text-pink-300 text-[10px]">{entry.version || '-'}</div>
               </div>
             ))}
+
+            {!showAll && entries.length > 10 && (
+              <button
+                onClick={() => setShowAll(true)}
+                className="w-full py-2 text-xs text-pink-400 hover:text-pink-600 hover:bg-pink-50 transition-colors cursor-pointer border-t border-pink-100"
+              >
+                + {entries.length - 10} more
+              </button>
+            )}
           </div>
         )}
 
