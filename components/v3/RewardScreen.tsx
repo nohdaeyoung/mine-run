@@ -46,7 +46,7 @@ export default function RewardScreen() {
                 {reward.type === 'heal' ? '💖' : reward.rarity === 'legendary' ? '⭐' : reward.rarity === 'rare' ? '💎' : '📦'}
               </div>
               <div className="font-bold text-xs mb-1">{reward.label}</div>
-              <div className="text-[10px] text-[#7a6a9a]">{reward.description}</div>
+              <div className="text-[10px] text-[#7a6a9a] font-kr">{reward.description}</div>
               {reward.rarity && (
                 <div className={`text-[10px] mt-2 uppercase tracking-wider
                   ${reward.rarity === 'legendary' ? 'text-[#f0c040]' : reward.rarity === 'rare' ? 'text-[#5ba3d9]' : 'text-[#b8a9d4]'}

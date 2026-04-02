@@ -4,8 +4,9 @@ const silkscreen = Silkscreen({ weight: ['400', '700'], subsets: ['latin'] });
 
 export default function V3Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className={silkscreen.className} style={{ fontFamily: `${silkscreen.style.fontFamily}, monospace` }}>
+    <div className={silkscreen.className} style={{ fontFamily: `${silkscreen.style.fontFamily}, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif, monospace` }}>
       <style>{`
+        .font-kr { font-family: "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
         @keyframes char-idle {
           0%, 100% { transform: translateY(0px); }
           50% { transform: translateY(-4px); }
