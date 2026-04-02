@@ -2,6 +2,7 @@ import type { Cell, ComboGrade } from './types';
 import { getNeighbors } from './minefield';
 import { calculateScore, calculateClearBonus } from './combo';
 import { useGameStore } from './store';
+import { getScannerRange } from './items';
 
 // === Event callbacks ===
 type GameEventCallback = {
@@ -273,4 +274,69 @@ export function handleChord(row: number, col: number): void {
   for (const [nr, nc] of hiddenNeighbors) {
     handleReveal(nr, nc);
   }
+}
+
+// === SCANNER ===
+export function handleScanner(row: number, col: number): void {
+  const store = useGameStore.getState();
+  const { field, phase, items } = store.run;
+  const { actions } = store;
+
+  if (phase !== 'in_progress') return;
+  if (field.cells.length === 0) return;
+
+  const scannerIndex = items.findIndex((i) => i.id === 'scanner' && i.charges > 0);
+  if (scannerIndex === -1) return;
+
+  const range = getScannerRange(items);
+  const radius = Math.floor(range / 2);
+
+  const newCells = field.cells.map((r) => r.map((c) => ({ ...c })));
+
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      const nr = row + dr;
+      const nc = col + dc;
+      if (nr < 0 || nr >= field.height || nc < 0 || nc >= field.width) continue;
+      const cell = newCells[nr][nc];
+      if (cell.visibility !== 'hidden') continue;
+      cell.scanned = cell.value === 'mine' ? 'danger' : 'safe';
+    }
+  }
+
+  actions.updateCells(newCells);
+  actions.updateItemCharges(scannerIndex, items[scannerIndex].charges - 1);
+  if (items[scannerIndex].charges - 1 <= 0) {
+    actions.removeItem(scannerIndex);
+  }
+}
+
+// === ALL-IN CLICK ===
+export function handleAllInClick(row: number, col: number): void {
+  const store = useGameStore.getState();
+  const { field, phase, items } = store.run;
+  const { actions } = store;
+
+  if (phase !== 'in_progress') return;
+  if (field.cells.length === 0) return;
+
+  const allInIndex = items.findIndex((i) => i.id === 'all-in-click' && i.charges > 0);
+  if (allInIndex === -1) return;
+
+  const radius = 2; // 5x5
+
+  // Reveal everything in the area, mines included
+  for (let dr = -radius; dr <= radius; dr++) {
+    for (let dc = -radius; dc <= radius; dc++) {
+      const nr = row + dr;
+      const nc = col + dc;
+      if (nr < 0 || nr >= field.height || nc < 0 || nc >= field.width) continue;
+      const cell = field.cells[nr][nc];
+      if (cell.visibility === 'hidden') {
+        handleReveal(nr, nc);
+      }
+    }
+  }
+
+  actions.removeItem(allInIndex);
 }

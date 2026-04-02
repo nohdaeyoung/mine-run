@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useGameStore } from '@/lib/store';
-import { handleReveal, handleFlag, handleChord } from '@/lib/tile-interaction';
+import { handleReveal, handleFlag, handleChord, handleScanner, handleAllInClick } from '@/lib/tile-interaction';
 import { generateFieldOnFirstClick } from '@/lib/run';
 import Cell from './Cell';
 
@@ -11,9 +11,11 @@ function useWindowWidth() {
     typeof window !== 'undefined' ? window.innerWidth : 800
   );
 
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', () => setWidth(window.innerWidth), { once: false });
-  }
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
 
   return width;
 }
@@ -21,6 +23,8 @@ function useWindowWidth() {
 export default function Board() {
   const field = useGameStore((s) => s.run.field);
   const phase = useGameStore((s) => s.run.phase);
+  const activeItemId = useGameStore((s) => s.flow.activeItemId);
+  const setActiveItem = useGameStore((s) => s.actions.setActiveItem);
   const [flagMode, setFlagMode] = useState(false);
 
   const toggleFlagMode = useCallback(() => setFlagMode((f) => !f), []);
@@ -71,6 +75,17 @@ export default function Board() {
   };
 
   const handleCellClick = (row: number, col: number) => {
+    // Active item targeting
+    if (activeItemId) {
+      if (activeItemId === 'scanner') {
+        handleScanner(row, col);
+      } else if (activeItemId === 'all-in-click') {
+        handleAllInClick(row, col);
+      }
+      setActiveItem(null);
+      return;
+    }
+
     const cell = field.cells[row]?.[col];
     if (cell?.visibility === 'revealed') {
       onChord(row, col);
@@ -119,7 +134,7 @@ export default function Board() {
               return (
                 <button
                   key={`${row}-${col}`}
-                  className="border border-slate-400/50 bg-slate-300 hover:bg-slate-200 cursor-pointer select-none transition-all duration-75"
+                  className="border border-slate-400/50 bg-slate-300 hover:bg-slate-200 cursor-pointer select-none transition-all duration-75 shadow-[inset_-2px_-2px_0_rgba(0,0,0,0.15),inset_2px_2px_0_rgba(255,255,255,0.6)]"
                   style={{ width: cellSize, height: cellSize }}
                   onClick={() => onReveal(row, col)}
                   aria-label={`Cell ${row},${col}`}
@@ -137,6 +152,7 @@ export default function Board() {
                   onReveal={() => handleCellClick(row, col)}
                   onFlag={() => onFlag(row, col)}
                   onChord={() => onChord(row, col)}
+                  isItemTarget={!!activeItemId}
                 />
               ))
             )}

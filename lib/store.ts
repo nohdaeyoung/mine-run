@@ -4,7 +4,7 @@ import type { Cell, Item, RunPhase, Screen } from './types';
 // === Tuning Knobs ===
 export const CONFIG = {
   BASE_HEALTH: 3,
-  BASE_ROOMS: 5,
+  BASE_ROOMS: 13,
   BASE_ITEM_SLOTS: 3,
   COMBO_RESET_ON_DAMAGE: true,
   TRANSITION_DURATION_MS: 300,
@@ -57,6 +57,7 @@ interface FlowState {
   screen: Screen;
   previousScreen: Screen;
   isTransitioning: boolean;
+  activeItemId: string | null; // item awaiting target cell click
 }
 
 interface GameActions {
@@ -83,6 +84,7 @@ interface GameActions {
   // Flow actions
   setScreen: (screen: Screen) => void;
   setTransitioning: (value: boolean) => void;
+  setActiveItem: (itemId: string | null) => void;
 }
 
 export interface GameStore {
@@ -128,6 +130,7 @@ const initialFlow: FlowState = {
   screen: 'title',
   previousScreen: 'title',
   isTransitioning: false,
+  activeItemId: null,
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -151,7 +154,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
           totalRooms: CONFIG.BASE_ROOMS + roomBonus,
           seed: Math.random().toString(36).slice(2),
         },
-        flow: { screen: 'run', previousScreen: 'title', isTransitioning: false },
+        flow: { screen: 'run', previousScreen: 'title', isTransitioning: false, activeItemId: null },
       });
     },
 
@@ -269,6 +272,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     setTransitioning: (value) =>
       set((s) => ({
         flow: { ...s.flow, isTransitioning: value },
+      })),
+
+    setActiveItem: (itemId) =>
+      set((s) => ({
+        flow: { ...s.flow, activeItemId: itemId },
       })),
   },
 }));

@@ -10,6 +10,8 @@ export default function HUD() {
   const totalRooms = useGameStore((s) => s.run.totalRooms);
   const field = useGameStore((s) => s.run.field);
   const phase = useGameStore((s) => s.run.phase);
+  const activeItemId = useGameStore((s) => s.flow.activeItemId);
+  const setActiveItem = useGameStore((s) => s.actions.setActiveItem);
 
   if (phase === 'not_started') return null;
 
@@ -44,19 +46,34 @@ export default function HUD() {
 
         {/* Items */}
         <div className="flex gap-1 overflow-x-auto">
-          {items.map((item, i) => (
-            <div
-              key={i}
-              className={`
-                px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap
-                ${item.rarity === 'legendary' ? 'bg-amber-500' : item.rarity === 'rare' ? 'bg-blue-500' : 'bg-slate-500'}
-              `}
-              title={item.description}
-            >
-              {item.name} {item.type === 'active' ? `×${item.charges}` : ''}
-            </div>
-          ))}
+          {items.map((item, i) => {
+            const isActive = item.type === 'active' && item.charges > 0;
+            const isSelected = activeItemId === item.id;
+            return (
+              <button
+                key={i}
+                onClick={() => {
+                  if (!isActive) return;
+                  setActiveItem(isSelected ? null : item.id);
+                }}
+                className={`
+                  px-1.5 sm:px-2 py-0.5 rounded text-[10px] sm:text-xs font-medium whitespace-nowrap transition-all
+                  ${item.rarity === 'legendary' ? 'bg-amber-500' : item.rarity === 'rare' ? 'bg-blue-500' : 'bg-slate-500'}
+                  ${isActive ? 'cursor-pointer hover:brightness-110' : 'opacity-70'}
+                  ${isSelected ? 'ring-2 ring-white scale-110' : ''}
+                `}
+                title={isActive ? `Click to use ${item.name}` : item.description}
+              >
+                {item.name} {item.type === 'active' ? `×${item.charges}` : ''}
+              </button>
+            );
+          })}
         </div>
+        {activeItemId && (
+          <div className="text-[10px] text-amber-400 font-medium animate-pulse">
+            Select a cell to use {activeItemId === 'scanner' ? 'Scanner' : 'All-In Click'}
+          </div>
+        )}
       </div>
     </div>
   );

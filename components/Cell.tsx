@@ -10,6 +10,7 @@ interface CellProps {
   onReveal: () => void;
   onFlag: () => void;
   onChord: () => void;
+  isItemTarget?: boolean;
 }
 
 const NUMBER_COLORS: Record<number, string> = {
@@ -23,7 +24,7 @@ const NUMBER_COLORS: Record<number, string> = {
   8: 'text-slate-500',
 };
 
-export default function Cell({ cell, size, onReveal, onFlag, onChord }: CellProps) {
+export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: CellProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onReveal();
@@ -40,28 +41,39 @@ export default function Cell({ cell, size, onReveal, onFlag, onChord }: CellProp
   let extraClass = '';
 
   if (cell.visibility === 'revealed') {
-    bgClass = 'bg-slate-800/60';
+    bgClass = 'bg-slate-900/80';
+    extraClass = 'border-slate-700/30';
     if (typeof cell.value === 'number' && cell.value > 0) {
       content = String(cell.value);
       textClass = NUMBER_COLORS[cell.value] || 'text-slate-300';
     }
   } else if (cell.visibility === 'flagged') {
-    bgClass = 'bg-slate-600/80 hover:bg-slate-500/80 cursor-pointer';
+    bgClass = 'bg-slate-300/90 hover:bg-slate-200 cursor-pointer shadow-[inset_-1px_-1px_0_rgba(0,0,0,0.15),inset_1px_1px_0_rgba(255,255,255,0.6)]';
     content = '🚩';
-    extraClass = 'border-red-500/30';
+    extraClass = 'border-slate-400/50';
   } else if (cell.visibility === 'exploded') {
-    bgClass = 'bg-red-600/80';
+    bgClass = 'bg-red-600 animate-pulse';
     content = '💥';
+    extraClass = 'border-red-500';
   } else if (cell.scanned === 'safe') {
-    bgClass = 'bg-green-900/40 hover:bg-green-800/40 cursor-pointer';
-    extraClass = 'border-green-500/30';
+    bgClass = 'bg-emerald-300/80 hover:bg-emerald-200 cursor-pointer shadow-[inset_-1px_-1px_0_rgba(0,0,0,0.1),inset_1px_1px_0_rgba(255,255,255,0.5)]';
+    content = '✓';
+    textClass = 'text-emerald-700 text-xs';
+    extraClass = 'border-emerald-400/60';
   } else if (cell.scanned === 'danger') {
-    bgClass = 'bg-red-900/40 hover:bg-red-800/40 cursor-pointer';
-    extraClass = 'border-red-500/30';
+    bgClass = 'bg-red-300/80 hover:bg-red-200 cursor-pointer shadow-[inset_-1px_-1px_0_rgba(0,0,0,0.1),inset_1px_1px_0_rgba(255,255,255,0.5)]';
+    content = '⚠';
+    textClass = 'text-red-700 text-xs';
+    extraClass = 'border-red-400/60';
   } else {
-    // Hidden cell
-    bgClass = 'bg-slate-600/50 hover:bg-slate-500/60 cursor-pointer active:bg-slate-500/80';
-    extraClass = 'border-slate-500/20 hover:border-slate-400/30';
+    // Hidden cell — raised, clickable look
+    bgClass = 'bg-slate-300 hover:bg-slate-200 cursor-pointer active:bg-slate-400 shadow-[inset_-2px_-2px_0_rgba(0,0,0,0.15),inset_2px_2px_0_rgba(255,255,255,0.6)]';
+    extraClass = 'border-slate-400/50 hover:border-slate-300/60';
+  }
+
+  // Item targeting highlight
+  if (isItemTarget && cell.visibility === 'hidden') {
+    extraClass += ' ring-2 ring-amber-400/70';
   }
 
   const fontSize = size >= 40 ? 'text-base' : size >= 32 ? 'text-sm' : 'text-xs';
@@ -70,7 +82,7 @@ export default function Cell({ cell, size, onReveal, onFlag, onChord }: CellProp
     <button
       className={`
         border flex items-center justify-center
-        font-bold select-none transition-all duration-75
+        font-bold select-none transition-all duration-100
         ${bgClass} ${textClass} ${fontSize} ${extraClass}
       `}
       style={{ width: size, height: size }}
