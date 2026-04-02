@@ -2,20 +2,20 @@
 
 import Link from 'next/link';
 import { useGameStore } from '@/lib/store';
-import TitleScreen from '@/components/TitleScreen';
-import Board from '@/components/Board';
-import HUD from '@/components/HUD';
-import ComboPopup from '@/components/ComboPopup';
-import RewardScreen from '@/components/RewardScreen';
-import GameOverScreen from '@/components/GameOverScreen';
-import Leaderboard from '@/components/Leaderboard';
+import TitleScreen from '@/components/v2/TitleScreen';
+import Board from '@/components/v2/Board';
+import HUD from '@/components/v2/HUD';
+import ComboPopup from '@/components/v2/ComboPopup';
+import RewardScreen from '@/components/v2/RewardScreen';
+import GameOverScreen from '@/components/v2/GameOverScreen';
+import Leaderboard from '@/components/v2/Leaderboard';
 import NoContextMenu from '@/components/NoContextMenu';
 
-export default function Home() {
+export default function HomeV2() {
   const screen = useGameStore((s) => s.flow.screen);
 
   return (
-    <div className="min-h-screen bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-pink-50 via-orange-50 to-yellow-50">
       <NoContextMenu />
       <TitleScreen />
 

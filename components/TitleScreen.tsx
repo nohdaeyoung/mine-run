@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useGameStore } from '@/lib/store';
 import { startNewRun } from '@/lib/run';
 
@@ -47,8 +48,15 @@ export default function TitleScreen() {
           PLAY
         </button>
 
+        {/* Version switcher */}
+        <div className="mt-4 flex justify-center gap-2">
+          <span className="px-3 py-1 text-xs font-bold text-white bg-white/20 rounded-full">v1</span>
+          <Link href="/v2" className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all">v2</Link>
+          <Link href="/v3" className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all">v3</Link>
+        </div>
+
         {/* Leaderboard */}
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             onClick={() => setScreen('meta_shop')}
             className="px-6 py-2 text-slate-400 font-medium hover:text-white transition-all cursor-pointer
