@@ -1,4 +1,4 @@
-import { db } from './firebase';
+import { getDb } from './firebase';
 import { ref, get, push, query, orderByChild, limitToLast } from 'firebase/database';
 
 export interface LeaderboardEntry {
@@ -14,7 +14,7 @@ const MAX_ENTRIES = 50;
 
 export async function getLeaderboard(): Promise<LeaderboardEntry[]> {
   try {
-    const q = query(ref(db, LEADERBOARD_REF), orderByChild('score'), limitToLast(MAX_ENTRIES));
+    const q = query(ref(getDb(), LEADERBOARD_REF), orderByChild('score'), limitToLast(MAX_ENTRIES));
     const snapshot = await get(q);
     if (!snapshot.exists()) return [];
 
@@ -38,7 +38,7 @@ export async function addToLeaderboard(entry: Omit<LeaderboardEntry, 'date'>): P
       date: new Date().toISOString(),
     };
 
-    await push(ref(db, LEADERBOARD_REF), newEntry);
+    await push(ref(getDb(), LEADERBOARD_REF), newEntry);
 
     // Get rank
     const board = await getLeaderboard();
