@@ -53,6 +53,7 @@ export default function TitleScreen() {
           <span className="px-3 py-1 text-xs font-bold text-white bg-white/20 rounded-full">v1</span>
           <Link href="/v2" className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all">v2</Link>
           <Link href="/v3" className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all">v3</Link>
+          <Link href="/v4" className="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all">v4</Link>
         </div>
 
         {/* Leaderboard */}

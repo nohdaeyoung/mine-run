@@ -81,12 +81,12 @@ export default function Leaderboard() {
               </div>
             ))}
 
-            {!showAll && entries.length > 10 && (
+            {entries.length > 10 && (
               <button
-                onClick={() => setShowAll(true)}
+                onClick={() => setShowAll(!showAll)}
                 className="w-full py-2 text-xs text-pink-400 hover:text-pink-600 hover:bg-pink-50 transition-colors cursor-pointer border-t border-pink-100"
               >
-                + {entries.length - 10} more
+                {showAll ? '- Collapse' : `+ ${entries.length - 10} more`}
               </button>
             )}
           </div>
