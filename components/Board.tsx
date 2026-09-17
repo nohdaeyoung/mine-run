@@ -1,9 +1,17 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useGameStore } from '@/lib/store';
-import { handleReveal, handleFlag, handleChord, handleScanner, handleAllInClick } from '@/lib/tile-interaction';
+import {
+  handleReveal,
+  handleFlag,
+  handleChord,
+  handleScanner,
+  handleAllInClick,
+  onGameEvent,
+} from '@/lib/tile-interaction';
 import { generateFieldOnFirstClick } from '@/lib/run';
+import { sfxHeartbeat } from '@/lib/sfx';
 import Cell from './Cell';
 
 function useWindowWidth() {
@@ -20,12 +28,24 @@ function useWindowWidth() {
   return width;
 }
 
+interface FloatScore {
+  id: number;
+  row: number;
+  col: number;
+  points: number;
+}
+
 export default function Board() {
   const field = useGameStore((s) => s.run.field);
   const phase = useGameStore((s) => s.run.phase);
   const activeItemId = useGameStore((s) => s.flow.activeItemId);
   const setActiveItem = useGameStore((s) => s.actions.setActiveItem);
   const [flagMode, setFlagMode] = useState(false);
+
+  const [shake, setShake] = useState<'' | 'sm' | 'lg'>('');
+  const [revealMap, setRevealMap] = useState<Map<string, number>>(new Map());
+  const [floats, setFloats] = useState<FloatScore[]>([]);
+  const nextId = useRef(1);
 
   const toggleFlagMode = useCallback(() => setFlagMode((f) => !f), []);
 
@@ -40,6 +60,34 @@ export default function Board() {
     return () => window.removeEventListener('keydown', handler);
   }, [toggleFlagMode]);
 
+  // === Effect events: stagger reveal pops, floating score, screen shake ===
+  useEffect(() => {
+    const unsubs = [
+      onGameEvent('cellsRevealed', ({ cells, origin, points }) => {
+        if (cells.length === 0) return;
+        const oRow = origin?.row ?? cells[0].row;
+        const oCol = origin?.col ?? cells[0].col;
+        const m = new Map<string, number>();
+        for (const { row, col } of cells) {
+          const dist = Math.max(Math.abs(row - oRow), Math.abs(col - oCol));
+          m.set(`${row},${col}`, Math.min(220, dist * 22));
+        }
+        setRevealMap(m);
+        setTimeout(() => setRevealMap(new Map()), 650);
+
+        if (origin && points > 0) {
+          const id = nextId.current++;
+          setFloats((f) => [...f, { id, row: origin.row, col: origin.col, points }]);
+          setTimeout(() => setFloats((f) => f.filter((x) => x.id !== id)), 900);
+        }
+      }),
+      onGameEvent('mineHit', () => setShake('lg')),
+      onGameEvent('gameOver', () => setShake('lg')),
+      onGameEvent('shieldSave', () => setShake('sm')),
+    ];
+    return () => unsubs.forEach((u) => u());
+  }, []);
+
   const windowWidth = useWindowWidth();
 
   // Calculate cell size based on screen width
@@ -51,6 +99,27 @@ export default function Board() {
     const size = Math.floor(available / field.width);
     return Math.max(28, Math.min(48, size)); // min 28px, max 48px
   }, [windowWidth, field.width]);
+
+  // === Clutch detection: few safe cells left = heightened tension ===
+  const hiddenSafe = useMemo(() => {
+    if (field.cells.length === 0) return Infinity;
+    let n = 0;
+    for (const rowCells of field.cells) {
+      for (const c of rowCells) {
+        if (c.visibility === 'hidden' && c.value !== 'mine') n++;
+      }
+    }
+    return n;
+  }, [field.cells]);
+
+  const clutch = phase === 'in_progress' && hiddenSafe > 0 && hiddenSafe <= 3;
+
+  useEffect(() => {
+    if (!clutch) return;
+    sfxHeartbeat();
+    const interval = setInterval(() => sfxHeartbeat(), 900);
+    return () => clearInterval(interval);
+  }, [clutch]);
 
   const onReveal = (row: number, col: number) => {
     if (field.cells.length === 0) {
@@ -99,9 +168,13 @@ export default function Board() {
   if (phase === 'not_started') return null;
 
   const showEmpty = field.cells.length === 0;
+  const shakeClass = shake === 'lg' ? 'mr-shake-lg' : shake === 'sm' ? 'mr-shake-sm' : '';
 
   return (
     <div className="flex flex-col items-center gap-2 w-full px-2" onContextMenu={(e) => e.preventDefault()}>
+      {/* Clutch vignette */}
+      {clutch && <div className="fixed inset-0 z-20 pointer-events-none mr-vignette-clutch" />}
+
       {/* Desktop toggle button above board */}
       <div className="flex items-center gap-3">
         <button
@@ -122,10 +195,11 @@ export default function Board() {
       </div>
 
       <div
-        className="inline-grid gap-0 border border-slate-600/50 rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)]"
+        className={`relative inline-grid gap-0 border border-slate-600/50 rounded-lg overflow-hidden shadow-[0_0_40px_rgba(0,0,0,0.3)] ${shakeClass}`}
         style={{
           gridTemplateColumns: `repeat(${field.width}, ${cellSize}px)`,
         }}
+        onAnimationEnd={() => setShake('')}
       >
         {showEmpty
           ? Array.from({ length: field.height * field.width }, (_, i) => {
@@ -153,9 +227,24 @@ export default function Board() {
                   onFlag={() => onFlag(row, col)}
                   onChord={() => onChord(row, col)}
                   isItemTarget={!!activeItemId}
+                  revealDelay={revealMap.get(`${row},${col}`)}
                 />
               ))
             )}
+
+        {/* Floating score numbers */}
+        {floats.map((f) => (
+          <div
+            key={f.id}
+            className="mr-score-float absolute z-30 pointer-events-none font-black text-amber-300 text-lg drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]"
+            style={{
+              top: f.row * cellSize - 6,
+              left: f.col * cellSize + cellSize / 2,
+            }}
+          >
+            +{f.points}
+          </div>
+        ))}
       </div>
 
       {/* Floating flag toggle — bottom right (mobile only) */}

@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useGameStore } from '@/lib/store';
+import { onGameEvent } from '@/lib/tile-interaction';
 
 export default function HUD() {
   const score = useGameStore((s) => s.run.score);
@@ -12,6 +14,13 @@ export default function HUD() {
   const phase = useGameStore((s) => s.run.phase);
   const activeItemId = useGameStore((s) => s.flow.activeItemId);
   const setActiveItem = useGameStore((s) => s.actions.setActiveItem);
+
+  const [hitKey, setHitKey] = useState(0);
+
+  useEffect(() => {
+    const unsub = onGameEvent('mineHit', () => setHitKey((k) => k + 1));
+    return unsub;
+  }, []);
 
   if (phase === 'not_started') return null;
 
@@ -37,11 +46,18 @@ export default function HUD() {
       <div className="flex items-center justify-between px-3 py-2 bg-slate-700 text-white rounded-b-lg text-xs sm:text-sm gap-2">
         {/* Health */}
         <div className="flex gap-0.5 shrink-0">
-          {Array.from({ length: health.max }, (_, i) => (
-            <span key={i} className={`text-sm sm:text-lg ${i < health.current ? '' : 'opacity-30'}`}>
-              {i < health.current ? '❤️' : '🖤'}
-            </span>
-          ))}
+          {Array.from({ length: health.max }, (_, i) => {
+            const filled = i < health.current;
+            const justLost = !filled && i === health.current && hitKey > 0;
+            return (
+              <span
+                key={justLost ? `lost-${hitKey}` : `h-${i}`}
+                className={`text-sm sm:text-lg ${filled ? '' : 'opacity-30'} ${justLost ? 'mr-heart-break' : ''}`}
+              >
+                {filled ? '❤️' : justLost ? '💔' : '🖤'}
+              </span>
+            );
+          })}
         </div>
 
         {/* Items */}

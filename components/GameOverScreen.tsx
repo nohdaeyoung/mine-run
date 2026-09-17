@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGameStore, CONFIG } from '@/lib/store';
 import { startNewRun } from '@/lib/run';
 import { addToLeaderboard } from '@/lib/leaderboard';
+import { onGameEvent } from '@/lib/tile-interaction';
+import { sfxVictory, sfxNewRecord } from '@/lib/sfx';
 
 export default function GameOverScreen() {
   const screen = useGameStore((s) => s.flow.screen);
@@ -18,9 +20,57 @@ export default function GameOverScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [rank, setRank] = useState<number | null>(null);
 
-  if (screen !== 'game_over' && screen !== 'victory') return null;
+  const [recap, setRecap] = useState<{ safeRemaining: number; total: number } | null>(null);
+  const [isRecord, setIsRecord] = useState(false);
+  const [displayScore, setDisplayScore] = useState(0);
+  const recordCaptured = useRef(false);
 
+  // Capture how close the run ended + whether it beat the personal best (death path).
+  useEffect(() => {
+    const unsub = onGameEvent('gameOver', ({ safeRemaining, totalSafeCells }) => {
+      setRecap({ safeRemaining, total: totalSafeCells });
+      const best = useGameStore.getState().meta.stats.bestScore;
+      const sc = useGameStore.getState().run.score;
+      setIsRecord(sc > best && sc > 0);
+      recordCaptured.current = true;
+    });
+    return unsub;
+  }, []);
+
+  const isOver = screen === 'game_over' || screen === 'victory';
   const isVictory = screen === 'victory';
+
+  // Score count-up + stingers on entry.
+  useEffect(() => {
+    if (!isOver) {
+      setDisplayScore(0);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const dur = 900;
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - start) / dur);
+      setDisplayScore(Math.floor(score * (1 - Math.pow(1 - t, 3))));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [isOver, score]);
+
+  useEffect(() => {
+    if (isVictory) sfxVictory();
+  }, [isVictory]);
+
+  useEffect(() => {
+    if (screen === 'game_over' && isRecord) {
+      const t = setTimeout(() => sfxNewRecord(), 550);
+      return () => clearTimeout(t);
+    }
+  }, [screen, isRecord]);
+
+  if (!isOver) return null;
+
   const minerals = Math.max(
     CONFIG.MIN_MINERALS,
     Math.floor(score * CONFIG.MINERAL_RATE * (isVictory ? CONFIG.VICTORY_BONUS_MULT : 1))
@@ -41,31 +91,59 @@ export default function GameOverScreen() {
     setSubmitting(false);
   };
 
-  const handlePlayAgain = () => {
+  const reset = () => {
     setNickname('');
     setSubmitted(false);
     setRank(null);
+    setRecap(null);
+    setIsRecord(false);
+    recordCaptured.current = false;
+  };
+
+  const handlePlayAgain = () => {
+    reset();
     startNewRun();
   };
 
   const handleGoTitle = () => {
-    setNickname('');
-    setSubmitted(false);
-    setRank(null);
+    reset();
     setScreen('title');
   };
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-sm">
       <div className="text-center text-white max-w-sm w-full px-4">
-        <h1 className={`text-4xl font-black mb-2 ${isVictory ? 'text-amber-400' : 'text-red-400'}`}>
+        {isRecord && !isVictory && (
+          <div className="mb-2 mr-banner-in">
+            <span className="inline-block text-amber-300 font-black text-lg tracking-widest uppercase mr-record-glow">
+              ★ New Record ★
+            </span>
+          </div>
+        )}
+
+        <h1 className={`text-4xl font-black mb-2 mr-banner-in ${isVictory ? 'text-amber-400' : 'text-red-400'}`}>
           {isVictory ? 'VICTORY!' : 'GAME OVER'}
         </h1>
+
+        {/* Loss-aversion recap: how close was it? */}
+        {!isVictory && recap && recap.total > 0 && (
+          <p className="text-sm text-slate-300 mb-4">
+            {recap.safeRemaining <= 3 ? (
+              <span className="text-amber-300 font-bold">
+                단 {recap.safeRemaining}칸 남기고 쓰러졌다… 아까워!
+              </span>
+            ) : (
+              <>안전칸 <span className="font-bold text-white">{recap.safeRemaining}</span>개 남기고 종료</>
+            )}
+          </p>
+        )}
 
         <div className="bg-slate-800/80 rounded-xl p-6 mb-4">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div className="text-slate-400">Score</div>
-            <div className="font-bold text-right tabular-nums">{score.toLocaleString()}</div>
+            <div className={`font-bold text-right tabular-nums ${isRecord ? 'text-amber-300 mr-record-glow' : ''}`}>
+              {displayScore.toLocaleString()}
+            </div>
 
             <div className="text-slate-400">Best Combo</div>
             <div className="font-bold text-right tabular-nums">{bestCombo} cells</div>
@@ -104,7 +182,7 @@ export default function GameOverScreen() {
           </div>
         ) : (
           rank !== null && rank > 0 && (
-            <div className="bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 text-amber-300 text-sm font-bold">
+            <div className="bg-amber-500/20 border border-amber-500/50 rounded-xl p-3 mb-4 text-amber-300 text-sm font-bold mr-banner-in">
               #{rank} on the leaderboard!
             </div>
           )
@@ -127,7 +205,7 @@ export default function GameOverScreen() {
             Title
           </button>
           <button
-            onClick={() => { setNickname(''); setSubmitted(false); setRank(null); setScreen('title'); }}
+            onClick={() => { reset(); setScreen('meta_shop'); }}
             className="text-sm text-amber-400 hover:text-amber-300 transition-colors cursor-pointer"
           >
             Leaderboard

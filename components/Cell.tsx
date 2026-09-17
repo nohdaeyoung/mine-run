@@ -1,5 +1,6 @@
 'use client';
 
+import { memo } from 'react';
 import type { Cell as CellType } from '@/lib/types';
 
 interface CellProps {
@@ -11,6 +12,7 @@ interface CellProps {
   onFlag: () => void;
   onChord: () => void;
   isItemTarget?: boolean;
+  revealDelay?: number; // ms; present => this cell was just revealed, play pop
 }
 
 const NUMBER_COLORS: Record<number, string> = {
@@ -24,7 +26,7 @@ const NUMBER_COLORS: Record<number, string> = {
   8: 'text-slate-500',
 };
 
-export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: CellProps) {
+function Cell({ cell, size, onReveal, onFlag, isItemTarget, revealDelay }: CellProps) {
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     onReveal();
@@ -39,6 +41,7 @@ export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: Cel
   let bgClass = '';
   let textClass = '';
   let extraClass = '';
+  let popClass = '';
 
   if (cell.visibility === 'revealed') {
     bgClass = 'bg-slate-900/80';
@@ -47,14 +50,17 @@ export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: Cel
       content = String(cell.value);
       textClass = NUMBER_COLORS[cell.value] || 'text-slate-300';
     }
+    if (revealDelay !== undefined) popClass = 'mr-cell-pop';
   } else if (cell.visibility === 'flagged') {
     bgClass = 'bg-slate-300/90 hover:bg-slate-200 cursor-pointer shadow-[inset_-1px_-1px_0_rgba(0,0,0,0.15),inset_1px_1px_0_rgba(255,255,255,0.6)]';
     content = '🚩';
     extraClass = 'border-slate-400/50';
+    popClass = 'mr-cell-pop';
   } else if (cell.visibility === 'exploded') {
-    bgClass = 'bg-red-600 animate-pulse';
+    bgClass = 'bg-red-600';
     content = '💥';
     extraClass = 'border-red-500';
+    popClass = 'mr-explode';
   } else if (cell.scanned === 'safe') {
     bgClass = 'bg-emerald-300/80 hover:bg-emerald-200 cursor-pointer shadow-[inset_-1px_-1px_0_rgba(0,0,0,0.1),inset_1px_1px_0_rgba(255,255,255,0.5)]';
     content = '✓';
@@ -83,9 +89,13 @@ export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: Cel
       className={`
         border flex items-center justify-center
         font-bold select-none transition-all duration-100
-        ${bgClass} ${textClass} ${fontSize} ${extraClass}
+        ${bgClass} ${textClass} ${fontSize} ${extraClass} ${popClass}
       `}
-      style={{ width: size, height: size }}
+      style={{
+        width: size,
+        height: size,
+        animationDelay: revealDelay ? `${revealDelay}ms` : undefined,
+      }}
       onClick={handleClick}
       onContextMenu={handleContextMenu}
     >
@@ -93,3 +103,5 @@ export default function Cell({ cell, size, onReveal, onFlag, isItemTarget }: Cel
     </button>
   );
 }
+
+export default memo(Cell);

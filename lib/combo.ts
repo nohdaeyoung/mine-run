@@ -17,6 +17,8 @@ const MULTIPLIERS: Record<ComboGrade, number> = {
 };
 
 const CLEAR_MULTIPLIER = 2;
+const JACKPOT_CHANCE = 0.1;
+export const JACKPOT_MULTIPLIER = 3;
 
 export function getComboGrade(cellsRevealed: number): ComboGrade {
   if (cellsRevealed >= GRADES.FEARLESS_MIN) return 'FEARLESS';
@@ -41,6 +43,17 @@ export function calculateScore(cellsRevealed: number): {
   return { grade, multiplier, points };
 }
 
-export function calculateClearBonus(totalSafeCells: number): number {
+function calculateClearBonus(totalSafeCells: number): number {
   return totalSafeCells * CLEAR_MULTIPLIER;
+}
+
+// One field clear in ten pays the clear bonus triple. `roll` is injectable so
+// the payout table is checkable without stubbing Math.random.
+export function rollFieldClear(
+  totalSafeCells: number,
+  roll: number = Math.random()
+): { clearBonus: number; jackpot: boolean } {
+  const jackpot = roll < JACKPOT_CHANCE;
+  const base = calculateClearBonus(totalSafeCells);
+  return { clearBonus: jackpot ? base * JACKPOT_MULTIPLIER : base, jackpot };
 }
